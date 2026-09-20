@@ -74,6 +74,22 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.btn-github {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #181717;
+  color: white;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-github:hover {
+  background: #24292f;
+}
+
 /* Main horizontal split */
 main {
   flex: 1;

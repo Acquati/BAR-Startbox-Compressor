@@ -1,23 +1,36 @@
 # BAR-Startbox-Compressor
 
-Compress BAR (Beyond All Reason) startbox definitions into a single zlib + base64url string
-for the `mapmetadata_startbox_override` setting. The tool runs fully in the browser: load a
-minimap image, click to place 2×2 startbox squares per team, and it generates the
-`!bset …` chat command to paste into the lobby.
+Create polygon starting boxes for BAR (Beyond All Reason), the tool runs fully in the browser: load a minimap image, click to place 2×2 startbox squares per team, and it generates the `!bset …` chat command to paste into the lobby. Sets a startbox definitions into a single zlib + base64url string for the `mapmetadata_startbox_override` setting.
 
-## Usage (for humans)
+Hosted on **GitHub Pages**: <https://acquati.github.io/BAR-Startbox-Compressor/>
 
-1. Open `index.html` in a browser (no build step, no server required).
-2. Optional: load a minimap image (`public/maps/` has samples) and click to place squares.
-3. Edit the JSON directly, or click **Compress & Copy** to produce the string and copy it.
+## Usage
 
-Structure:
+1. Open the [GitHub Pages link](https://acquati.github.io/BAR-Startbox-Compressor/) or `index.html` in a browser (no build step, no server required).
+2. Load a minimap image (`public/maps/` has samples) and click to place starting positions (squares).
+3. Edit the JSON directly if needed.
+4. Click **Compress & Copy** to produce the string and copy it.
+5. Paste it in BAR text message in lobby.
+
+## Minimum files to host
 
 ```
-config files        .prettierrc, .editorconfig, .vscode/, opencode.json, package.json
-app                 index.html, script.js, style.css
-assets              public/maps/*.png
+index.html            entry point (links style.css + script.js)
+style.css             styles
+script.js             app logic
+public/maps/          minimap images (Krakatoa.png is loaded as the default map)
 ```
+
+Everything else not required to run, is editor/tooling config — `package.json`, `.prettierrc`, `.editorconfig`, `.vscode/`, `opencode.json`, `.gitignore`, `.gitattributes`. Keep it in the repository for contributors, but it is not deployed and not required to run.
+
+Notes when reusing this setup in other projects:
+
+- `public/maps/Krakatoa.png` is only needed because `script.js` loads it on startup
+  (`loadMapImage('public/maps/Krakatoa.png')`). Delete that line and the folder can go.
+- The app is a zero-build static site: host it on any static file server or GitHub
+  Pages by publishing the repository root of a branch — no server, API, or build step.
+- Keep asset paths relative (as above) so the site works from a subpath like
+  `https://user.github.io/repo/`.
 
 ## Development
 
