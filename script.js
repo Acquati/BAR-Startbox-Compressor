@@ -251,10 +251,70 @@ function polysFromJSON(text) {
   return result;
 }
 
+function squaresFromChain(poly) {
+  const runs = [];
+  let run = null;
+  let prev = null;
+  for (const raw of poly) {
+    const x = Math.round(Number(raw.x)) || 0;
+    const y = Math.round(Number(raw.y)) || 0;
+    if (prev && x === prev.x && y === prev.y) continue;
+    const hop = prev ? Math.abs(x - prev.x) + Math.abs(y - prev.y) : 0;
+    const adjacent = hop === 2 && (x === prev.x || y === prev.y);
+    if (run && adjacent) {
+      const minX = Math.min(run.minX, x);
+      const maxX = Math.max(run.maxX, x);
+      const minY = Math.min(run.minY, y);
+      const maxY = Math.max(run.maxY, y);
+      if (maxX - minX <= 2 && maxY - minY <= 2) {
+        run.minX = minX;
+        run.maxX = maxX;
+        run.minY = minY;
+        run.maxY = maxY;
+        run.corners++;
+        prev = { x, y };
+        continue;
+      }
+    }
+    run = { minX: x, maxX: x, minY: y, maxY: y, corners: 1 };
+    runs.push(run);
+    prev = { x, y };
+  }
+  const result = [];
+  const seen = new Set();
+  for (const r of runs) {
+    if (r.corners < 3) continue;
+    const key = r.minX + ',' + r.minY;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push({
+      x: Math.max(0, Math.min(200 - SQUARE_SIZE, r.minX)),
+      y: Math.max(0, Math.min(200 - SQUARE_SIZE, r.minY)),
+    });
+  }
+  return result;
+}
+
+function squaresFromJSON(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return [[], [], [], []];
+  }
+  const boxes = Array.isArray(data && data.startboxes) ? data.startboxes : [];
+  const result = [[], [], [], []];
+  for (let i = 0; i < boxes.length && i < result.length; i++) {
+    const poly = boxes[i] && boxes[i].poly;
+    result[i] = Array.isArray(poly) ? squaresFromChain(poly) : [];
+  }
+  return result;
+}
+
 btnExample.addEventListener('click', () => {
   inputEl.value = EXAMPLE;
-  teamSquares = [[], [], [], []];
-  teamPolys = polysFromJSON(EXAMPLE);
+  teamSquares = squaresFromJSON(EXAMPLE);
+  teamPolys = [[], [], [], []];
   setActiveTeam(activeTeam);
   drawOverlay();
   doCompress();
