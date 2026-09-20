@@ -29,6 +29,8 @@ const splitterH = document.getElementById('splitterH');
 
 // Per-team squares: each is {x, y} = top-left of a 2×2 square on the 0–200 grid
 let teamSquares = [[], [], [], []]; // Teams 1–4
+// Raw polygons (from parsed JSON) for teams imported as text; empty = drawn from squares
+let teamPolys = [[], [], [], []];
 let activeTeam = 0;
 const SQUARE_SIZE = 2;
 const TEAM_COLORS = [
@@ -199,6 +201,11 @@ async function doCompress() {
     return;
   }
 
+  if (teamSquares.every((s) => s.length === 0)) {
+    teamPolys = polysFromJSON(raw);
+    drawOverlay();
+  }
+
   btnCompress.disabled = true;
   try {
     const encoded = await compress(raw);
@@ -223,8 +230,33 @@ async function doCompress() {
 
 btnCompress.addEventListener('click', doCompress);
 
+function polysFromJSON(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return [[], [], [], []];
+  }
+  const boxes = Array.isArray(data && data.startboxes) ? data.startboxes : [];
+  const result = [[], [], [], []];
+  for (let i = 0; i < boxes.length && i < result.length; i++) {
+    const poly = boxes[i] && boxes[i].poly;
+    result[i] = Array.isArray(poly)
+      ? poly.map((p) => ({
+          x: Math.round(Number(p.x)) || 0,
+          y: Math.round(Number(p.y)) || 0,
+        }))
+      : [];
+  }
+  return result;
+}
+
 btnExample.addEventListener('click', () => {
   inputEl.value = EXAMPLE;
+  teamSquares = [[], [], [], []];
+  teamPolys = polysFromJSON(EXAMPLE);
+  setActiveTeam(activeTeam);
+  drawOverlay();
   doCompress();
 });
 
@@ -355,6 +387,7 @@ function buildPolygon(squares) {
 }
 
 function updateJSONFromSquares() {
+  teamPolys = [[], [], [], []];
   const startboxes = [];
   for (let t = 0; t < teamSquares.length; t++) {
     const poly = buildPolygon(teamSquares[t]);
@@ -407,8 +440,27 @@ function drawOverlay() {
 
   for (let t = 0; t < teamSquares.length; t++) {
     const squares = teamSquares[t];
-    if (squares.length === 0) continue;
+    const rawPoly = teamPolys[t];
+    if (squares.length === 0 && rawPoly.length === 0) continue;
     const col = TEAM_COLORS[t];
+
+    if (rawPoly.length > 0) {
+      ctx.strokeStyle = col.poly;
+      ctx.fillStyle = col.fill;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < rawPoly.length; i++) {
+        const p = gridToFramePercent(rawPoly[i].x, rawPoly[i].y);
+        const px = (p.x / 100) * mapCanvas.width;
+        const py = (p.y / 100) * mapCanvas.height;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      continue;
+    }
 
     ctx.strokeStyle = col.stroke;
     ctx.fillStyle = col.fill;
@@ -489,6 +541,7 @@ btnUndoSquare.addEventListener('click', () => {
 
 btnClearSquares.addEventListener('click', () => {
   teamSquares = [[], [], [], []];
+  teamPolys = [[], [], [], []];
   setActiveTeam(activeTeam);
   inputEl.value = '';
   inputStatus.textContent = '';
