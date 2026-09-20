@@ -383,15 +383,18 @@ function placeSquare(gx, gy) {
   drawOverlay();
 }
 
-mapImageInput.addEventListener('change', (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
+function loadMapImage(url) {
   mapImage.onload = () => drawOverlay();
   mapImage.src = url;
   mapFrame.classList.add('has-image');
   clickMarker.style.display = 'none';
   setActiveTeam(activeTeam);
+}
+
+mapImageInput.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  loadMapImage(URL.createObjectURL(file));
 });
 
 btnClearImage.addEventListener('click', () => {
@@ -451,6 +454,8 @@ const resizeObs = new ResizeObserver(() => drawOverlay());
 resizeObs.observe(mapFrame);
 
 setActiveTeam(0);
+
+loadMapImage('public/maps/Krakatoa.png');
 
 // ---- Resizable splitters ----
 function makeSplitter(el, direction) {
