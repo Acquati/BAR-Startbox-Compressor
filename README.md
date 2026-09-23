@@ -61,6 +61,10 @@ enabled in `.vscode/settings.json`.
 `opencode.json` sets `"formatter": true`, so opencode runs Prettier through its built-in
 support whenever it edits a matching file. Restart opencode after changing config files.
 
+## License
+
+[MIT](LICENSE)
+
 ## Agent / LLM instructions
 
 Apply these rules when editing this repository:
