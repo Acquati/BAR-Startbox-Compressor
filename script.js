@@ -335,6 +335,20 @@ inputEl.addEventListener('keydown', (e) => {
   }
 });
 
+inputEl.addEventListener('input', () => {
+  let data;
+  try {
+    data = JSON.parse(inputEl.value.trim());
+  } catch {
+    return;
+  }
+  if (!data || !Array.isArray(data.startboxes)) return;
+  teamSquares = [[], [], [], []];
+  teamPolys = polysFromJSON(inputEl.value);
+  setActiveTeam(activeTeam);
+  drawOverlay();
+});
+
 // ---- Map: 6×6 square placer + polygon builder ----
 function getImageRect() {
   if (!mapImage.src || !mapImage.naturalWidth) return null;
