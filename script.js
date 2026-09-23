@@ -28,14 +28,14 @@ const rightBottom = document.getElementById('rightBottom');
 const splitterV = document.getElementById('splitterV');
 const splitterH = document.getElementById('splitterH');
 
-// Per-team squares: each is {x, y} = top-left of a 2×2 square on the 0–200 grid
+// Per-team squares: each is {x, y} = top-left of a 6×6 square on the 0–200 grid
 let teamSquares = [[], [], [], []]; // Teams 1–4
 // Raw polygons (from parsed JSON) for teams imported as text; empty = drawn from squares
 let teamPolys = [[], [], [], []];
 let activeTeam = 0;
-let SQUARE_SIZE = Number(squareSizeInput.value) || 2;
+let SQUARE_SIZE = Number(squareSizeInput.value) || 6;
 squareSizeInput.addEventListener('input', () => {
-  SQUARE_SIZE = Math.max(1, Math.min(100, Number(squareSizeInput.value) || 2));
+  SQUARE_SIZE = Math.max(1, Math.min(100, Number(squareSizeInput.value) || 6));
   if (activeTeam !== undefined) setActiveTeam(activeTeam);
   updateJSONFromSquares();
   drawOverlay();
@@ -335,7 +335,7 @@ inputEl.addEventListener('keydown', (e) => {
   }
 });
 
-// ---- Map: 2×2 square placer + polygon builder ----
+// ---- Map: 6×6 square placer + polygon builder ----
 function getImageRect() {
   if (!mapImage.src || !mapImage.naturalWidth) return null;
   const frameRect = mapFrame.getBoundingClientRect();
@@ -616,7 +616,106 @@ btnClearSquares.addEventListener('click', () => {
   drawOverlay();
 });
 
+// ---- Drag to move a placed square (or an imported poly chain) ----
+// Press any team's square/poly and hold+move to reposition it. Dragging does
+// not switch the active team. Only an actual move suppresses the click that
+// follows the release (so it doesn't drop an extra square).
+let dragState = null;
+let suppressNextClick = false;
+
+function pointInPoly(px, py, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].x;
+    const yi = pts[i].y;
+    const xj = pts[j].x;
+    const yj = pts[j].y;
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function hitTestGrid(gx, gy) {
+  // Squares first (most recent wins), then imported poly chains; any team may
+  // be grabbed without switching the active team.
+  for (let t = 0; t < 4; t++) {
+    for (let i = teamSquares[t].length - 1; i >= 0; i--) {
+      const s = teamSquares[t][i];
+      if (gx >= s.x && gx < s.x + SQUARE_SIZE && gy >= s.y && gy < s.y + SQUARE_SIZE) {
+        return { team: t, index: i, isPoly: false };
+      }
+    }
+  }
+  for (let t = 0; t < 4; t++) {
+    if (teamPolys[t].length > 0 && pointInPoly(gx, gy, teamPolys[t])) {
+      return { team: t, index: 0, isPoly: true };
+    }
+  }
+  return null;
+}
+
+mapFrame.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  const g = clientToGrid(e.clientX, e.clientY);
+  if (!g) return;
+  const hit = hitTestGrid(g.x, g.y);
+  if (!hit) return;
+
+  dragState = {
+    team: hit.team,
+    isPoly: hit.isPoly,
+    startGX: g.x,
+    startGY: g.y,
+    moved: false,
+    startPos: hit.isPoly
+      ? teamPolys[hit.team].map((p) => ({ ...p }))
+      : { ...teamSquares[hit.team][hit.index] },
+  };
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!dragState) return;
+  const g = clientToGrid(e.clientX, e.clientY);
+  if (!g) return;
+  const d = dragState;
+  if (g.x !== d.startGX || g.y !== d.startGY) d.moved = true;
+  const dx = g.x - d.startGX;
+  const dy = g.y - d.startGY;
+
+  let label;
+  if (d.isPoly) {
+    teamPolys[d.team] = d.startPos.map((p) => ({
+      x: Math.max(0, Math.min(200, p.x + dx)),
+      y: Math.max(0, Math.min(200, p.y + dy)),
+    }));
+    label = `Team ${d.team + 1} — chain dragged (${teamPolys[d.team].length} pts)`;
+  } else {
+    const s = teamSquares[d.team][d.index];
+    s.x = Math.max(0, Math.min(200 - SQUARE_SIZE, d.startPos.x + dx));
+    s.y = Math.max(0, Math.min(200 - SQUARE_SIZE, d.startPos.y + dy));
+    label = `Team ${d.team + 1} — square at (${s.x},${s.y})–(${s.x + SQUARE_SIZE},${s.y + SQUARE_SIZE})`;
+  }
+  coordDisplay.textContent = label;
+  updateJSONFromSquares();
+  drawOverlay();
+});
+
+document.addEventListener('mouseup', () => {
+  if (!dragState) return;
+  if (dragState.moved) suppressNextClick = true;
+  dragState = null;
+  clickMarker.style.display = 'none';
+});
+
 mapFrame.addEventListener('click', (e) => {
+  // After a real drag, ignore the trailing click so it doesn't place a square
+  if (suppressNextClick) {
+    suppressNextClick = false;
+    return;
+  }
   const g = clientToGrid(e.clientX, e.clientY);
   if (!g) return;
   placeSquare(g.x, g.y);

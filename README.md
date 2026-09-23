@@ -1,13 +1,13 @@
 # BAR-Startbox-Compressor
 
-Create polygon starting boxes for BAR (Beyond All Reason), the tool runs fully in the browser: load a minimap image, click to place 2×2 startbox squares per team, and it generates the `!bset …` chat command to paste into the lobby. Sets a startbox definitions into a single zlib + base64url string for the `mapmetadata_startbox_override` setting.
+Create polygon starting boxes for BAR (Beyond All Reason), the tool runs fully in the browser: load a minimap image, click to place 6×6 startbox squares per team (default; size is adjustable 1–100), and it generates the `!bset …` chat command to paste into the lobby. Sets a startbox definitions into a single zlib + base64url string for the `mapmetadata_startbox_override` setting.
 
 Hosted on **GitHub Pages**: <https://acquati.github.io/BAR-Startbox-Compressor/>
 
 ## Usage
 
 1. Open the [GitHub Pages link](https://acquati.github.io/BAR-Startbox-Compressor/) or `index.html` in a browser (no build step, no server required).
-2. Load a minimap image (`public/maps/` has samples) and click to place starting positions (squares).
+2. Load a minimap image (`public/maps/` has samples) and click to place starting positions (squares). Drag any placed square or imported chain to move it (any team, without switching).
 3. Edit the JSON directly if needed.
 4. Click **Compress & Copy** to produce the string and copy it.
 5. Paste it in BAR text message in lobby.
