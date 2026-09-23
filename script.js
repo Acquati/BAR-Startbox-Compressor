@@ -19,6 +19,7 @@ const btnClearSquares = document.getElementById('btnClearSquares');
 const coordDisplay = document.getElementById('coordDisplay');
 const clickMarker = document.getElementById('clickMarker');
 const mapCanvas = document.getElementById('mapCanvas');
+const squareSizeInput = document.getElementById('squareSizeInput');
 
 const paneLeft = document.getElementById('paneLeft');
 const paneRight = document.getElementById('paneRight');
@@ -32,7 +33,13 @@ let teamSquares = [[], [], [], []]; // Teams 1–4
 // Raw polygons (from parsed JSON) for teams imported as text; empty = drawn from squares
 let teamPolys = [[], [], [], []];
 let activeTeam = 0;
-const SQUARE_SIZE = 2;
+let SQUARE_SIZE = Number(squareSizeInput.value) || 2;
+squareSizeInput.addEventListener('input', () => {
+  SQUARE_SIZE = Math.max(1, Math.min(100, Number(squareSizeInput.value) || 2));
+  if (activeTeam !== undefined) setActiveTeam(activeTeam);
+  updateJSONFromSquares();
+  drawOverlay();
+});
 const TEAM_COLORS = [
   { stroke: '#34d399', fill: 'rgba(52, 211, 153, 0.25)', poly: '#f87171', active: '#059669' },
   { stroke: '#60a5fa', fill: 'rgba(96, 165, 250, 0.25)', poly: '#c084fc', active: '#2563eb' },
@@ -54,7 +61,8 @@ function setActiveTeam(t) {
     btn.style.fontSize = '0.75rem';
   });
   const n = teamSquares[t].length;
-  coordDisplay.textContent = `Team ${t + 1}` + (n ? ` — ${n} square(s)` : ' — click to place 2×2');
+  coordDisplay.textContent =
+    `Team ${t + 1}` + (n ? ` — ${n} square(s)` : ` — click to place ${SQUARE_SIZE}×${SQUARE_SIZE}`);
 }
 
 const EXAMPLE = `{"startboxes":[
