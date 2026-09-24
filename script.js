@@ -577,8 +577,8 @@ function drawOverlay() {
 }
 
 function placeSquare(gx, gy) {
-  const x = Math.max(0, Math.min(200 - SQUARE_SIZE, gx));
-  const y = Math.max(0, Math.min(200 - SQUARE_SIZE, gy));
+  const x = Math.max(0, Math.min(200 - SQUARE_SIZE, gx - Math.floor(SQUARE_SIZE / 2)));
+  const y = Math.max(0, Math.min(200 - SQUARE_SIZE, gy - Math.floor(SQUARE_SIZE / 2)));
   teamSquares[activeTeam].push({ x, y });
   const n = teamSquares[activeTeam].length;
   coordDisplay.textContent = `Team ${activeTeam + 1} — square ${n}: (${x},${y})–(${x + SQUARE_SIZE},${y + SQUARE_SIZE})`;
